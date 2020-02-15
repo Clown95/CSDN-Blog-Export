@@ -41,21 +41,27 @@ author: Clown95
 然后我的思维又开始拐弯，如果是md格式的文章，我们在文章的编辑界面不是可以直接获取到md文本吗？我在编辑页面把所有的md文章，都直接保存为md不就能省很多功夫？
 ![](https://raw.githubusercontent.com/Clown95/StroyBack/master/小书匠/1573880580773.png)
 
-但是接下来我去查看编辑页面源代码的时候，没有发现文章的内容。这时候不要慌！那么它肯定是通过某个接口来加载数据的，查看下`XHR`果然发现了一个接口，参数是文章ID：
-`https://mp.csdn.net/mdeditor/getArticle?id=103007106`  
+但是接下来我去查看编辑页面源代码的时候，没有发现文章的内容。这时候不要慌！那么它肯定是通过某个接口来加载数据的，查看下`XHR`果然发现了一个接口，参数是文章ID。
+~~`https://mp.csdn.net/mdeditor/getArticle?id=103007106`~~   (该接口富文本内容已失效)
+
+新的接口为：
+> https://blog-console-api.csdn.net/v1/editor/getArticle?id=103007106
 
 ![](https://raw.githubusercontent.com/Clown95/StroyBack/master/小书匠/1573880667072.png)
 
 以此类推，我再去打开富文本文章的编辑界面，我希望它也是通过接口加载数据的，这样在进行数据处理的时候我就能够省很多代码。然鹅富文本格式并没有接口数据。
 
 但是我这个人比较轴，我就想试下，我把接口ID改成富文本文章的ID，看看它是否能够为我传来数据，果然有的时候搞开发就要有折腾的精神，我成功得到了文章内容 。
-`https://mp.csdn.net/mdeditor/getArticle?id=82253319` 
-![enter description here](https://raw.githubusercontent.com/Clown95/StroyBack/master/小书匠/1573880978266.png)
+~~`https://mp.csdn.net/mdeditor/getArticle?id=82253319` ~~
+
+ `https://blog-console-api.csdn.net/v1/editor/getArticle?id=82253319`
+
+![](https://raw.githubusercontent.com/Clown95/StroyBack/master/小书匠/1573880978266.png)
 
 两个数据不一样的地方就是，如果是md文章，它 `markdowncontent` 里面的内容是 md文本，如果是富文本的文章，它`markdowncontent`属性就为空，因此我们在导出文本的时候，如果遇到`markdowncontent`不为空就获取`markdowncontent`的内容并保存为.md ,如果遇到为空的情况，就获取`content`内容并保存为.html
 
 ## 4.整理
-现在我们已知 `https://mp.csdn.net/mdeditor/getArticle?id=xxxx` 这个接口可以获取到文章的信息，参数是文章ID。
+现在我们已知 `https://blog-console-api.csdn.net/v1/editor/getArticle?id=xxxx` 这个接口可以获取到文章的信息，参数是文章ID。
 所以接下来我们需要做的就是，通过爬虫模拟csdn登录状态，获取所爬的博客中每篇文章的ID,传递给接口，获取文章标题和内容，并根据格式保存不同的文件。
 
 
@@ -257,7 +263,8 @@ func main() {
 	runpath := utils.GetRunPath()
 
 	for i := 0; i < len(models.ArrDetailID); i++ {
-		jsonurl := fmt.Sprintf("https://mp.csdn.net/mdeditor/getArticle?id=%s", models.ArrDetailID[i])
+		//jsonurl := fmt.Sprintf("https://mp.csdn.net/mdeditor/getArticle?id=%s", models.ArrDetailID[i])
+		jsonurl := fmt.Sprintf("https://blog-console-api.csdn.net/v1/editor/getArticle?id=%s", models.ArrDetailID[i])
 		name, content := transaction.ParseArticleJson(jsonurl)
 		utils.WriteWithIoutil(runpath+"/"+name, content)
 		time.Sleep(1000) //设置延时
@@ -271,10 +278,7 @@ func main() {
 ```ini
 [csdn]
 blogurl = https://blog.csdn.net/yang731227  ;博客地址
-totalpage = 7   ;博客文章列表数
+totalpage = 7   ;博客文章页数
 cookie =     ;爬取账号的cookie
  
 ```
-
-
-如果你觉得对你有帮助,给个star呗 https://github.com/Clown95/CSDN-Blog-Export
